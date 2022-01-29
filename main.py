@@ -10,30 +10,28 @@ LEFT_WIDTH = 1
 CENTER_WIDTH = 4
 
 
-def UpdateData(strName, cached=True):
+def CleanData(strName):
+  txt_filepath = os.path.join("UncleanedData",strName + ".txt")
+  csv_filepath = os.path.join("CleanedData",strName + ".csv") 
 
-  if cached:
-    txt_filepath = os.path.join("UncleanedData", strName + ".txt")
-    csv_filepath = os.path.join("CleanedData", strName + ".csv")
-  else:
-    ##TODO: Add in code to download new from the website and save in appropriate spot
-    txt_filepath = os.path.join("UncleanedData", "newest" + strName + ".txt")
-    csv_filepath = os.path.join("CleanedData", "newest" + strName + ".csv")
 
-  cleaned_df = data_clean.CleanWholeDataFrame(
-      data_clean.filepath2df(txt_filepath))
-  cleaned_df.to_csv(csv_filepath)
+def UpdateData(strName, cached = True):
+
+  cleaned_df = pd.read_csv( os.path.join("CleanedData",strName + ".csv")  )
+  cleaned_df["Date"] = pd.to_datetime(cleaned_df["Date"])
+
   ##do r process here
-  Made_Predictions = False
+  Made_Predictions = True
   if Made_Predictions:
-    path2script = "wsPrediction.r"
-    x = subprocess.check_output(['Rscript', path2script, csv_filepath])
-    ##Update interpolated so it is strings
+  #  path2script = "wsPrediction.r"
+  #  x = subprocess.check_output( ['Rscript', path2script, csv_filepath])
+  ##Update interpolated so it is strings
     #"Original Data", "Interpolated Data", "Predicted Values"
-    ###append predicted values
-    predicted_df = pd.read_csv("PredictedData/CleanedData" + strName + ".csv")
-    predicted_df["Any Interpolated"] = "Predicted Data"
+  ###append predicted values
+    predicted_df = pd.read_csv( os.path.join("PredictedData", strName + "_for.csv") )
+    predicted_df["Date"] = pd.to_datetime(predicted_df["Date"])
     combined_data = cleaned_df.append(predicted_df)
+    combined_data["Any Interpolated"][ pd.isna(combined_data["Any Interpolated"]) ] = "Predicted Data"
   else:
     combined_data = cleaned_df
 
@@ -229,10 +227,12 @@ def findDailyAverage(df):
 
 
 ###Uncomment this block of code if you want t recreate the cleaned .csv's
-for station_name in ("KIKT", "KBQX", "KMIS"):
-  UpdateData(station_name)
+#for station_name in ("KIKT", "KBQX", "KMIS"):
+#  CleanData(station_name)
+
+#UpdateData("KBQX")
+
 
 Made_Predictions = False
 if __name__ == "__main__":
-
   SetupPage()

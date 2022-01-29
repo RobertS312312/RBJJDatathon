@@ -7,11 +7,11 @@ import io
 
 
 
-def SimpleInterpolateColumn(one_pandas_columns):
+def SimpleInterpolateColumn(one_pandas_columns, min = -np.inf, max = np.inf):
     
     this_col_interpolated = pd.Series( [False] * len(one_pandas_columns))
     for i in range(len(one_pandas_columns)):
-        if pd.isna(one_pandas_columns.iloc[i]) or one_pandas_columns.iloc[i]>360 or one_pandas_columns.iloc[i]<0  :
+        if pd.isna(one_pandas_columns.iloc[i]) or one_pandas_columns.iloc[i]>max or one_pandas_columns.iloc[i]<min  :
             # We know [i-1] must be non null at the point, only have 
             # to worry about if [i+1] is non null, if it is null we go 
             # forward until we reach end of data or we find one that is 
@@ -53,7 +53,10 @@ def CleanWholeDataFrame(df):
             continue
         df[col_name][ df[col_name] == "MM" ] = np.nan
         df[col_name] = df[col_name].astype("float32")
-        df[col_name],this_col_interpolated = SimpleInterpolateColumn(df[col_name])
+        if col_name == "WDIR":
+                df[col_name],this_col_interpolated = SimpleInterpolateColumn(df[col_name],0,360)
+        else:            
+            df[col_name],this_col_interpolated = SimpleInterpolateColumn(df[col_name])
         if col_name == "WDIR" or col_name == "WSDP":
             df["Any Interpolated"] = df["Any Interpolated"] | this_col_interpolated
 
