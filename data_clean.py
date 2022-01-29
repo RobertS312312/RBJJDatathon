@@ -39,8 +39,14 @@ def CleanWholeDataFrame(df):
     drop_list = ['WVHT','DPD','GST','APD','MWD','PRES','WTMP','PTDY','TIDE']
 
     df.drop(drop_list, inplace=True, axis=1)
+    df = df.rename(columns = lambda x: "YY" if x == "#YY" else x)
 
+    df["Date"] = pd.to_datetime(df[ ["YY","MM","DD","hh","mm"] ].rename(columns = {
+        "YY":"year", "MM":"month", "DD":"day", "hh": "hour", "mm":"minute"}))
+    
     for col_name in df.columns:
+        if col_name == "Date":
+            continue
         df[col_name][ df[col_name] == "MM" ] = np.nan
         df[col_name] = df[col_name].astype("float32")
 
@@ -50,7 +56,6 @@ def CleanWholeDataFrame(df):
         else:
             df[col] = SimpleInterpolateColumn(df[col])
 
-    print(df)
     return df
 
 def to_csv_string(filepath):
