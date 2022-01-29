@@ -61,8 +61,11 @@ def SetupPage():
         " enough data and interpolated missing values from the columns that"
         " we decided to use. Our interpolation method was simple. For missing"
         " values, we simply took the average of the most recent value and the"
-        " next value in the column.\n"
-        "We then created this dashboard, which included three plots: ")
+        " next value in the column.\n\n"
+        "We then created this dashboard, which includes two plots: a polar"
+        " plot of wind speed and direction data at every time point, and a plot"
+        " that averages these data by day. These plots include historical data"
+        " and the predicted data for the next three days.")
 
     # I feel like we need to greatly shorten this blurb or move it to the center
     st.header("Plots")
