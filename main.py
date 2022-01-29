@@ -20,6 +20,11 @@ def UpdateData(strName, cached = True):
   cleaned_df = data_clean.CleanWholeDataFrame(data_clean.filepath2df(txt_filepath))
   cleaned_df.to_csv(csv_filepath)
   ##do r process here
+
+  ##Update interpolated so it is strings
+    #"Original Data", "Interpolated Data", "Predicted Values"
+  ###append predicted values
+  
   return cleaned_df
   #CreateVisuals(cleaned_df)
 
@@ -46,7 +51,9 @@ def SetupPage():
       " and KMIS in ____. Additionally, you can choose to update to the most recent "
       " data available at each of the sources ('Newest Data'), or to restore the data " + 
       " as it exsisted on the day of the datathon: Jan 28, 2022. ('Cached Data')")
-    option = st.selectbox("Weather Station", ("KIKT", "KAPT", "KMIS"))
+    option = st.selectbox("Weather Station", ("KMIS", "KIKT", "KAPT"))
+    if option == "KAPT":
+      option = "KBQX"
 
     cleaned_df = UpdateData(option)
     if st.button("Cached Data"):
@@ -74,7 +81,7 @@ def CreateVisuals(cleaned_df):
     st.plotly_chart(FullInfoPolar(cleaned_df))
     
     st.write("Daily average plot")
-    #st.plotly_chart(FullInfoPolar(cleaned_df))
+    st.plotly_chart(DailyAveragePolar(cleaned_df))
   with data_plots_first_row[2]:
     #here goes download things?
     st.write("downloads")    
@@ -85,27 +92,79 @@ def CreateVisuals(cleaned_df):
     st.write("time Series")
 
 def FullInfoPolar(cleaned_df):
-  #TODO: Verify if actually pointing right or if 90 degrees of
+  #TODO: Verify if actually pointing right or if 90 degrees off
   dots = True
   if dots:
-    fig =  px.scatter_polar(cleaned_df, r = "WSPD", theta = "WDIR", width = 400*center_width/2, height = 400*center_width/2,
+    fig =  px.scatter_polar(cleaned_df, r = "WSPD", theta = "WDIR", width = 200*center_width, height = 200*center_width,
     animation_frame = cleaned_df["Date"].astype("str"), range_r = [0,np.max(cleaned_df["WSPD"])],
-    title = "Test", color = "Any Interpolated")
+    title = "Test", color = "Any Interpolated", labels = {'Any Interpolated' :'Original, Interpolated, or Predicted'})
     return fig
 
 
   zeros_df = pd.DataFrame( data = { "WSPD" : [0] * len(cleaned_df), "Date" : cleaned_df["Date"], "WDIR" : [0] * len(cleaned_df) } )
   plot_df = cleaned_df.append( zeros_df  )
-  fig =  px.line_polar(plot_df, r = "WSPD", theta = "WDIR", width = 400*center_width/2, height = 400*center_width/2,
+  fig =  px.line_polar(plot_df, r = "WSPD", theta = "WDIR", width = 200*center_width/2, height = 200*center_width,
     animation_frame = plot_df["Date"].astype("str"), range_r = [0,np.max(plot_df["WSPD"])],
-    title = "Test")
+    title = "Test", color = "Any Interpolated", labels = {'Any Interpolated' :'Original, Interpolated, or Predicted'})
   return fig
 
 
 def DailyAveragePolar(cleaned_df):
-  ##TODO: actually do the daily averages
-  pass
+  
+  ##For each day, convert all entries for that day to vectors
+  ##Average them and convert back to polar
 
+  daily_average_df = findDailyAverage(cleaned_df)
+  print(daily_average_df)
+
+  fig = px.scatter_polar(daily_average_df, r = "WSPD", theta = "WDIR",  width = 200*center_width, height = 200*center_width,
+    animation_frame = daily_average_df["Date"].astype("str"), range_r = [0,np.max(daily_average_df["WSPD"])],
+    title = "Test2")
+  return fig
+
+def polar2cartesianx(r, theta_deg):
+  theta_rad = 2*np.pi *theta_deg / 360
+  x = r*np.sin(theta_rad) ##Usually these sin and cos should be flipped but our 0degrees is the y axis not the x
+  return x
+
+def polar2cartesiany(r, theta_deg):
+  theta_rad = 2*np.pi *theta_deg / 360
+  y = r*np.cos(theta_rad)
+  return y
+
+def cartesian2polar(x,y):
+  r = np.sqrt(x **2 + y **2)
+  theta_rad = np.arcsin(x/r) #normally would be arccos but 0dregrees is y axis
+  theta_deg = 360*theta_rad/(2*np.pi)
+  return r,theta_deg
+
+def findDailyAverage(df):
+
+  #DateTime2Str = lambda datetime: str(datetime.month) + "/" + str(datetime.day) + "/" + str(datetime.year)
+  set_of_days = set( df["Date"].dt.date )
+    ##Use set to remove duplicates
+  list_of_days = sorted(list(set_of_days))
+    ##Sort to be properly ordered after setting
+
+  list_of_avgr = []
+  list_of_avgtheta = []
+  for day in list_of_days:
+    this_day_wind_speed = df["WSPD"][ df["Date"].dt.date == day ]
+    this_day_wind_direction = df["WDIR"][ df["Date"].dt.date == day ]
+    
+    xlist = []
+    ylist = []
+    for idx in range(len(this_day_wind_direction)):
+      xlist.append(polar2cartesianx(this_day_wind_speed.iloc[idx], this_day_wind_direction.iloc[idx]))
+      ylist.append(polar2cartesiany(this_day_wind_speed.iloc[idx], this_day_wind_direction.iloc[idx]))
+    
+    avgx = np.average(xlist)
+    avgy = np.average(ylist)
+    avgr, avgtheta = cartesian2polar(avgx,avgy)
+    list_of_avgr.append(avgr)
+    list_of_avgtheta.append(avgtheta)
+    
+  return pd.DataFrame( data = {"WSPD": list_of_avgr, "WDIR": list_of_avgtheta, "Date" : pd.to_datetime(list_of_days)})
 
 
 ###Uncomment this block of code if you want t recreate the cleaned .csv's

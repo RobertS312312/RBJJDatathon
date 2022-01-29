@@ -54,9 +54,12 @@ def CleanWholeDataFrame(df):
         df[col_name][ df[col_name] == "MM" ] = np.nan
         df[col_name] = df[col_name].astype("float32")
         df[col_name],this_col_interpolated = SimpleInterpolateColumn(df[col_name])
-        df["Any Interpolated"] = df["Any Interpolated"] | this_col_interpolated
+        if col_name == "WDIR" or col_name == "WSDP":
+            df["Any Interpolated"] = df["Any Interpolated"] | this_col_interpolated
 
-    print(df["Any Interpolated"])
+    df["Any Interpolated"] = df["Any Interpolated"].apply( lambda bool: "Interpolated Data" if bool else "Original Data")
+    #print(df["Any Interpolated"])
+    df = df.sort_values(by = "Date")
     return df
 
 def to_csv_string(filepath):
