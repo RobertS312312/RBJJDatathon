@@ -4,6 +4,7 @@ import os
 import plotly.express as px
 import numpy as np
 import pandas as pd
+import subprocess
 
 def UpdateData(strName, cached = True):
 
@@ -20,12 +21,20 @@ def UpdateData(strName, cached = True):
   cleaned_df = data_clean.CleanWholeDataFrame(data_clean.filepath2df(txt_filepath))
   cleaned_df.to_csv(csv_filepath)
   ##do r process here
-
+  Made_Predictions = False
+  if Made_Predictions:
+    path2script = "wsPrediction.r"
+    x = subprocess.check_output( ['Rscript', path2script, csv_filepath])
   ##Update interpolated so it is strings
     #"Original Data", "Interpolated Data", "Predicted Values"
   ###append predicted values
-  
-  return cleaned_df
+    predicted_df = pd.read_csv("PredictedData/CleanedData" + strName + ".csv")
+    predicted_df["Any Interpolated"] = "Predicted Data"
+    combined_data = cleaned_df.append(predicted_df)
+  else:
+    combined_data = cleaned_df
+
+  return combined_data
   #CreateVisuals(cleaned_df)
 
 def SetupPage():
@@ -38,17 +47,15 @@ def SetupPage():
   with topbar[1]:
     st.title("Cognite Challenge")
 
-  intro_row = st.columns([left_width, center_width, right_width])
+  intro_row = st.columns([left_width, center_width])
   with intro_row[1]:
     # Add introductory information
     st.header("Introduction")
     st.write("Lorem ipsum dolor amet.")
-
-  with intro_row[2]:
     #I feel like we need to greatly shorten this blurb or move it to the center
     st.write("Below you can customize what data you want us to analyze."+
-      " There are three options of Weather Stations: KIKT in ____, KAPT in ____, "+
-      " and KMIS in ____. Additionally, you can choose to update to the most recent "
+      " There are three options of Weather Stations: KIKT, KAPT, "+
+      " and KMIS. Additionally, you can choose to update to the most recent "
       " data available at each of the sources ('Newest Data'), or to restore the data " + 
       " as it exsisted on the day of the datathon: Jan 28, 2022. ('Cached Data')")
     option = st.selectbox("Weather Station", ("KMIS", "KIKT", "KAPT"))
@@ -74,19 +81,16 @@ def CreateVisuals(cleaned_df):
   ##this function will call of those and impose the proper formatting
 
   # Time series plot
-  data_plots_first_row = st.columns([left_width, center_width, right_width])
+  data_plots_first_row = st.columns([left_width, center_width])
   with data_plots_first_row[1]:
     #here goes first visual *tune series?
     st.write("full information plotly interative")
     st.plotly_chart(FullInfoPolar(cleaned_df))
     
     st.write("Daily average plot")
-    st.plotly_chart(DailyAveragePolar(cleaned_df))
-  with data_plots_first_row[2]:
-    #here goes download things?
-    st.write("downloads")    
+    st.plotly_chart(DailyAveragePolar(cleaned_df)) 
 
-  data_plots_second_row = st.columns([left_width, center_width, right_width])
+  data_plots_second_row = st.columns([left_width, center_width])
 
   with data_plots_second_row[1]:
     st.write("time Series")
@@ -119,7 +123,7 @@ def DailyAveragePolar(cleaned_df):
 
   fig = px.scatter_polar(daily_average_df, r = "WSPD", theta = "WDIR",  width = 200*center_width, height = 200*center_width,
     animation_frame = daily_average_df["Date"].astype("str"), range_r = [0,np.max(daily_average_df["WSPD"])],
-    title = "Test2")
+    title = "Test2", color = "Original or Predicted")
   return fig
 
 def polar2cartesianx(r, theta_deg):
@@ -158,22 +162,28 @@ def findDailyAverage(df):
       xlist.append(polar2cartesianx(this_day_wind_speed.iloc[idx], this_day_wind_direction.iloc[idx]))
       ylist.append(polar2cartesiany(this_day_wind_speed.iloc[idx], this_day_wind_direction.iloc[idx]))
     
+
     avgx = np.average(xlist)
     avgy = np.average(ylist)
     avgr, avgtheta = cartesian2polar(avgx,avgy)
     list_of_avgr.append(avgr)
     list_of_avgtheta.append(avgtheta)
+  
+  if Made_Predictions:
+    list_of_predicted_or_original_data = ["Orignal Data"] * (len(list_of_days)-3) + ["Predicted Data"] * 3
+  else:
+    list_of_predicted_or_original_data = ["Orignal Data"] * (len(list_of_days))
     
-  return pd.DataFrame( data = {"WSPD": list_of_avgr, "WDIR": list_of_avgtheta, "Date" : pd.to_datetime(list_of_days)})
+  return pd.DataFrame( data = {"WSPD": list_of_avgr, "WDIR": list_of_avgtheta, "Date" : pd.to_datetime(list_of_days),
+                                  "Original or Predicted" : list_of_predicted_or_original_data})
 
 
 ###Uncomment this block of code if you want t recreate the cleaned .csv's
 for station_name in ("KIKT", "KBQX", "KMIS"):
   UpdateData(station_name)
 
-
-if __name__ == "__main__":
+Made_Predictions = False
+if __name__ == "__main__":  
   left_width = 1
   center_width = 3
-  right_width = 2
   SetupPage()
