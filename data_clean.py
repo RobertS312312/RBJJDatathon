@@ -11,7 +11,7 @@ def SimpleInterpolateColumn(one_pandas_columns):
     
     this_col_interpolated = pd.Series( [False] * len(one_pandas_columns))
     for i in range(len(one_pandas_columns)):
-        if pd.isna(one_pandas_columns.iloc[i]):
+        if pd.isna(one_pandas_columns.iloc[i]) or one_pandas_columns.iloc[i]>360 or one_pandas_columns.iloc[i]<0  :
             # We know [i-1] must be non null at the point, only have 
             # to worry about if [i+1] is non null, if it is null we go 
             # forward until we reach end of data or we find one that is 
@@ -24,7 +24,7 @@ def SimpleInterpolateColumn(one_pandas_columns):
                     one_pandas_columns.iloc[i] = one_pandas_columns.iloc[i-1]
                     this_col_interpolated[i] = True
                     break
-                elif not pd.isna(one_pandas_columns.iloc[next_non_null_idx]):
+                elif not (pd.isna(one_pandas_columns.iloc[i]) or one_pandas_columns.iloc[i]>360 or one_pandas_columns.iloc[i]<0):
                     ##Then we have found the future
                     one_pandas_columns.iloc[i] = one_pandas_columns.iloc[next_non_null_idx] + one_pandas_columns.iloc[i-1]
                     this_col_interpolated[i] = True
