@@ -18,11 +18,11 @@ def SimpleInterpolateColumn(one_pandas_columns):
 
             next_non_null_idx = i+1
             while True:
-                if next_non_null_idx < len(one_pandas_columns):
+                if next_non_null_idx >= len(one_pandas_columns):
                     #If there is no future, then just use the past
                     one_pandas_columns.iloc[i] = one_pandas_columns.iloc[i-1]
                     break
-                elif not pd.isna(one_pandas_columns[next_non_null_idx]):
+                elif not pd.isna(one_pandas_columns.iloc[next_non_null_idx]):
                     ##Then we have found the future
                     one_pandas_columns.iloc[i] = one_pandas_columns.iloc[next_non_null_idx] + one_pandas_columns.iloc[i-1]
                     break
@@ -47,9 +47,10 @@ def CleanWholeDataFrame(df):
     for col in df.columns:
         if col == 'Date':
             break
-    else:
-        df[col] = SimpleInterpolateColumn(df[col])
+        else:
+            df[col] = SimpleInterpolateColumn(df[col])
 
+    print(df)
     return df
 
 def to_csv_string(filepath):
