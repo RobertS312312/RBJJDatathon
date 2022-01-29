@@ -9,6 +9,7 @@ import io
 
 def SimpleInterpolateColumn(one_pandas_columns):
     
+    this_col_interpolated = pd.Series( [False] * len(one_pandas_columns))
     for i in range(len(one_pandas_columns)):
         if pd.isna(one_pandas_columns.iloc[i]):
             # We know [i-1] must be non null at the point, only have 
@@ -21,15 +22,17 @@ def SimpleInterpolateColumn(one_pandas_columns):
                 if next_non_null_idx >= len(one_pandas_columns):
                     #If there is no future, then just use the past
                     one_pandas_columns.iloc[i] = one_pandas_columns.iloc[i-1]
+                    this_col_interpolated[i] = True
                     break
                 elif not pd.isna(one_pandas_columns.iloc[next_non_null_idx]):
                     ##Then we have found the future
                     one_pandas_columns.iloc[i] = one_pandas_columns.iloc[next_non_null_idx] + one_pandas_columns.iloc[i-1]
+                    this_col_interpolated[i] = True
                     break
                 else:
                     next_non_null_idx+=1
     
-    return one_pandas_columns
+    return one_pandas_columns, this_col_interpolated
 
 def CleanWholeDataFrame(df):
 
@@ -44,18 +47,16 @@ def CleanWholeDataFrame(df):
     df["Date"] = pd.to_datetime(df[ ["YY","MM","DD","hh","mm"] ].rename(columns = {
         "YY":"year", "MM":"month", "DD":"day", "hh": "hour", "mm":"minute"}))
     
+    df["Any Interpolated"] = [False] * len(df)
     for col_name in df.columns:
-        if col_name == "Date":
+        if col_name == "Date" or col_name == "Any Interpolated":
             continue
         df[col_name][ df[col_name] == "MM" ] = np.nan
         df[col_name] = df[col_name].astype("float32")
+        df[col_name],this_col_interpolated = SimpleInterpolateColumn(df[col_name])
+        df["Any Interpolated"] = df["Any Interpolated"] | this_col_interpolated
 
-    for col in df.columns:
-        if col == 'Date':
-            break
-        else:
-            df[col] = SimpleInterpolateColumn(df[col])
-
+    print(df["Any Interpolated"])
     return df
 
 def to_csv_string(filepath):
