@@ -44,11 +44,11 @@ def CreateVisuals(cleaned_df):
   ##this function will call of those and impose the proper formatting
   pass
 
-
-for station_name in ("KIKT", "KBQX", "KMIS"):
-  if station_name == "KBQX":
-    pass
-  UpdateData(station_name)
+###Uncomment this block of code if you want t recreate the cleaned .csv's
+#for station_name in ("KIKT", "KBQX", "KMIS"):
+#  if station_name == "KBQX":
+#    pass
+#  UpdateData(station_name)
 
 
 if __name__ == "__main__":
