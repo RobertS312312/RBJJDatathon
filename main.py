@@ -91,16 +91,10 @@ def CreateVisuals(cleaned_df):
   data_plots_first_row = st.columns([LEFT_WIDTH, CENTER_WIDTH])
   with data_plots_first_row[1]:
     # here goes first visual *tune series?
-    st.write("full information plotly interative")
     st.plotly_chart(FullInfoPolar(cleaned_df))
 
-    st.write("Daily average plot")
+
     st.plotly_chart(DailyAveragePolar(cleaned_df))
-
-  data_plots_second_row = st.columns([LEFT_WIDTH, CENTER_WIDTH])
-
-  with data_plots_second_row[1]:
-    st.write("time Series")
 
 
 def FullInfoPolar(cleaned_df):
@@ -111,11 +105,11 @@ def FullInfoPolar(cleaned_df):
         cleaned_df,
         r="WSPD",
         theta="WDIR",
-        width=200 * CENTER_WIDTH,
-        height=200 * CENTER_WIDTH,
+        width=150 * CENTER_WIDTH,
+        height=150 * CENTER_WIDTH,
         animation_frame=cleaned_df["Date"].astype("str"),
         range_r=[0, np.max(cleaned_df["WSPD"])],
-        title="Test",
+        title="Polar Plot Of Every Observed, Interpolated, and Predicted Wind Speed and Direction",
         color="Any Interpolated",
         labels={'Any Interpolated': 'Original, Interpolated, or Predicted'})
     return fig
@@ -131,11 +125,11 @@ def FullInfoPolar(cleaned_df):
       plot_df,
       r="WSPD",
       theta="WDIR",
-      width=200 * CENTER_WIDTH / 2,
-      height=200 * CENTER_WIDTH,
+      width=150 * CENTER_WIDTH / 2,
+      height=150 * CENTER_WIDTH,
       animation_frame=plot_df["Date"].astype("str"),
       range_r=[0, np.max(plot_df["WSPD"])],
-      title="Test",
+      title="Polar Plot Of Every Observed, Interpolated, and Predicted Wind Speed and Direction",
       color="Any Interpolated",
       labels={'Any Interpolated': 'Original, Interpolated, or Predicted'})
   return fig
@@ -152,11 +146,11 @@ def DailyAveragePolar(cleaned_df):
   fig = px.scatter_polar(daily_average_df,
                          r="WSPD",
                          theta="WDIR",
-                         width=200 * CENTER_WIDTH,
-                         height=200 * CENTER_WIDTH,
+                         width=150 * CENTER_WIDTH,
+                         height=150 * CENTER_WIDTH,
                          animation_frame=daily_average_df["Date"].astype("str"),
                          range_r=[0, np.max(daily_average_df["WSPD"])],
-                         title="Test2",
+                         title="Polar Plot Of Average Wind Speeds and Directions for each Day",
                          color="Original or Predicted")
   return fig
 
@@ -236,6 +230,6 @@ def findDailyAverage(df):
 #UpdateData("KBQX")
 
 
-Made_Predictions = False
+Made_Predictions = True
 if __name__ == "__main__":
   SetupPage()
