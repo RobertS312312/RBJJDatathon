@@ -1,7 +1,7 @@
 import streamlit as st
 
 
-def setup_page():
+def SetupPage():
   cols = st.columns([1, 3, 1])
 
   with cols[1]:
@@ -19,4 +19,4 @@ def setup_page():
 
 
 if __name__ == "__main__":
-  setup_page()
+  SetupPage()
